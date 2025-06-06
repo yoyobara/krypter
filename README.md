@@ -1,2 +1,2 @@
 # krypter
-a rust package for serializing data inside images
+a rust package for serializing data inside png images
