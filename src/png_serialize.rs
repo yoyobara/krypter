@@ -7,24 +7,17 @@ use std::{
 };
 
 fn calculate_image_dimensions(data_size: usize) -> (usize, usize) {
-    let pixel_count = data_size / 4;
+    let pixel_count = data_size as f64 / 4.0;
 
-    let mut w = (pixel_count as f64).sqrt() as usize;
-    let mut h = pixel_count.div_ceil(w);
+    let mut w = pixel_count.sqrt().floor();
+    let mut h = (pixel_count / w).ceil();
 
     if w * h < pixel_count {
-        w += 1;
-        h = pixel_count.div_ceil(w);
+        w += 1.0;
+        h = (pixel_count / w).ceil();
     }
 
-    (w, h)
-}
-
-fn pad_with_random_values(mut data: Vec<u8>, desired_length: usize) -> Vec<u8> {
-    let bytes_to_pad = desired_length.saturating_sub(data.len());
-    data.extend(std::iter::repeat(0).take(bytes_to_pad));
-
-    data
+    (w as usize, h as usize)
 }
 
 pub fn data_to_png<W, S>(obj: S, output: &mut W) -> Result<(), Box<dyn Error>>
@@ -32,12 +25,13 @@ where
     W: Write + Seek,
     S: Serialize,
 {
-    let data = bincode::serde::encode_to_vec(obj, config::standard())?;
+    let mut data = bincode::serde::encode_to_vec(obj, config::standard())?;
     let (width, height) = calculate_image_dimensions(data.len());
 
-    let padded_data = pad_with_random_values(data, width * height);
+    data.resize(width * height * 4, 0);
+
     let img: RgbaImage =
-        ImageBuffer::from_raw(width as u32, height as u32, padded_data).ok_or("what")?;
+        ImageBuffer::from_raw(width as u32, height as u32, data).ok_or("what")?;
 
     img.write_to(output, image::ImageFormat::Png)?;
 
@@ -56,4 +50,23 @@ where
 
     let (obj, _): (D, _) = bincode::serde::decode_from_slice(&raw, config::standard())?;
     Ok(obj)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::Cursor;
+
+    use super::*;
+
+    #[test]
+    fn roundtrip() {
+        let original = vec![42u8; 1024];
+        let mut buffer = Cursor::new(Vec::new());
+        
+        data_to_png(&original, &mut buffer).unwrap();
+        buffer.set_position(0);
+        let restored: Vec<u8> = png_to_data(buffer).unwrap();
+        
+        assert_eq!(original, restored);
+    }
 }
