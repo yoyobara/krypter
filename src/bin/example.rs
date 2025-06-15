@@ -1,7 +1,10 @@
-use std::{fs::File, io::Cursor};
+use std::{fs::File, io::{BufReader, Cursor}};
 
-use krypter::krypt_encrypt;
+use krypter::{krypt_decrypt, krypt_encrypt};
 
 fn main() {
-    krypt_encrypt(Cursor::new(vec![1, 2, 3, 4, 5]), 2, |i| File::create(format!("out{}.png", i)).unwrap()).unwrap();
+    krypt_encrypt(File::open("./mylargefile").unwrap(), 400, |i| File::create(format!("out{}.png", i)).unwrap()).unwrap();
+    
+    let readers = vec![BufReader::new(File::open("out0.png").unwrap()), BufReader::new(File::open("out1.png").unwrap()), BufReader::new(File::open("out2.png").unwrap())];
+    krypt_decrypt(readers, File::create("wow.txt").unwrap()).unwrap();
 }
