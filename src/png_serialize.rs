@@ -30,8 +30,7 @@ where
 
     data.resize(width * height * 4, 0);
 
-    let img: RgbaImage =
-        ImageBuffer::from_raw(width as u32, height as u32, data).ok_or("what")?;
+    let img: RgbaImage = ImageBuffer::from_raw(width as u32, height as u32, data).ok_or("what")?;
 
     img.write_to(output, image::ImageFormat::Png)?;
 
@@ -55,18 +54,29 @@ where
 #[cfg(test)]
 mod tests {
     use std::io::Cursor;
+    use rand::Rng;
 
     use super::*;
 
-    #[test]
-    fn roundtrip() {
-        let original = vec![42u8; 1024];
-        let mut buffer = Cursor::new(Vec::new());
-        
-        data_to_png(&original, &mut buffer).unwrap();
-        buffer.set_position(0);
-        let restored: Vec<u8> = png_to_data(buffer).unwrap();
-        
-        assert_eq!(original, restored);
+    macro_rules! generate_test {
+        ($num:expr) => {
+            #[test]
+            fn roundtrip() {
+                let mut rng = rand::rng();
+                let original = (0..$num).map(|_| rng.random_range(0..=255)).collect::<Vec<u8>>();
+
+                let mut buffer = Cursor::new(Vec::new());
+
+                data_to_png(&original, &mut buffer).unwrap();
+                buffer.rewind().unwrap();
+                let restored: Vec<u8> = png_to_data(buffer).unwrap();
+
+                assert_eq!(original, restored);
+                println!("ok")
+            }
+        };
     }
+
+    generate_test!(2000 * 2000 * 4);
+
 }
