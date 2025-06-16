@@ -37,10 +37,10 @@ where
     Ok(())
 }
 
-pub fn png_to_data<'a, D, R>(input: R) -> Result<D, Box<dyn Error>>
+pub fn png_to_data<D, R>(input: R) -> Result<D, Box<dyn Error>>
 where
     D: DeserializeOwned,
-    R: 'a + BufRead + Seek,
+    R: BufRead + Seek,
 {
     let image = ImageReader::with_format(input, image::ImageFormat::Png)
         .decode()?
