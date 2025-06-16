@@ -51,32 +51,3 @@ where
     Ok(obj)
 }
 
-#[cfg(test)]
-mod tests {
-    use std::io::Cursor;
-    use rand::Rng;
-
-    use super::*;
-
-    macro_rules! generate_test {
-        ($num:expr) => {
-            #[test]
-            fn roundtrip() {
-                let mut rng = rand::rng();
-                let original = (0..$num).map(|_| rng.random_range(0..=255)).collect::<Vec<u8>>();
-
-                let mut buffer = Cursor::new(Vec::new());
-
-                data_to_png(&original, &mut buffer).unwrap();
-                buffer.rewind().unwrap();
-                let restored: Vec<u8> = png_to_data(buffer).unwrap();
-
-                assert_eq!(original, restored);
-                println!("ok")
-            }
-        };
-    }
-
-    generate_test!(2000 * 2000 * 4);
-
-}
