@@ -1,4 +1,4 @@
-use std::{fs::File, io::{BufReader, Cursor}};
+use std::{fs::File, io::BufReader};
 
 use krypter::{krypt_decrypt, krypt_encrypt};
 

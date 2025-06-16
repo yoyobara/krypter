@@ -47,7 +47,6 @@ where
         .into_rgba8();
     let raw = image.into_raw();
 
-    let (obj, _): (D, _) = bincode::serde::decode_from_slice(&raw, config::standard())?;
-    Ok(obj)
+    bincode::serde::decode_from_slice(&raw, config::standard()).map(|(d, _)| d).map_err(Into::into)
 }
 
